@@ -38,10 +38,53 @@ type QuestionFormProps = {
   onSubmit: (answers: Answer[]) => void;
 };
 
+const Modal = ({ message, onClose }: { message: string; onClose: () => void }) => (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      padding: '2rem',
+      borderRadius: '0.5rem',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      maxWidth: '20rem',
+      width: '100%',
+      textAlign: 'center'
+    }}>
+      <p style={{ marginBottom: '1.5rem', color: '#dc2626', fontWeight: 'bold' }}>{message}</p>
+      <button
+        onClick={onClose}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: '#2563eb',
+          color: 'white',
+          borderRadius: '0.375rem',
+          border: 'none',
+          cursor: 'pointer'
+        }}
+        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+      >
+        閉じる
+      </button>
+    </div>
+  </div>
+);
+
 const QuestionForm = ({ onSubmit }: QuestionFormProps) => {
   const [answers, setAnswers] = useState<Answer[]>(
     questions.map(q => ({ questionId: q.id, value: 0 }))
   );
+  const [showError, setShowError] = useState(false);
 
   const handleAnswerChange = (questionId: number, value: number) => {
     setAnswers(prev =>
@@ -55,8 +98,9 @@ const QuestionForm = ({ onSubmit }: QuestionFormProps) => {
     e.preventDefault();
     if (answers.every(answer => answer.value > 0)) {
       onSubmit(answers);
+      setShowError(false);
     } else {
-      alert('すべての質問に回答してください。');
+      setShowError(true);
     }
   };
 
@@ -69,50 +113,55 @@ const QuestionForm = ({ onSubmit }: QuestionFormProps) => {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-2xl font-bold text-center mb-8">生活満足度診断</h2>
-      <p className="text-sm text-gray-600 text-center mb-8">
-        各質問に対して「1：全くそう思わない」から「5：非常にそう思う」までの5段階で回答してください。
-      </p>
-      {questions.map((question, idx) => (
-        <React.Fragment key={question.id}>
-          <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
-            <div className="block text-sm font-medium text-gray-700">
-              <span className="font-bold">【質問{question.id}】</span><br />
-              <span className="pl-4">　{question.text}</span>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-2xl font-bold text-center mb-8">生活満足度診断</h2>
+        <p className="text-sm text-gray-600 text-center mb-8">
+          各質問に対して「1：全くそう思わない」から「5：非常にそう思う」までの5段階で回答してください。
+        </p>
+        {questions.map((question, idx) => (
+          <React.Fragment key={question.id}>
+            <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+              <div className="block text-sm font-medium text-gray-700">
+                <span className="font-bold">【質問{question.id}】</span><br />
+                <span className="pl-4">　{question.text}</span>
+              </div>
+              <div className="flex justify-between mt-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <label key={value} className="inline-flex items-center">
+                    <span>　</span>
+                    <input
+                      type="radio"
+                      name={`question-${question.id}`}
+                      value={value}
+                      checked={answers.find(a => a.questionId === question.id)?.value === value}
+                      onChange={() => handleAnswerChange(question.id, value)}
+                      className="form-radio h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-2 text-sm">
+                      {answerLabels[value - 1]}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
-            <div className="flex justify-between mt-2">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <label key={value} className="inline-flex items-center">
-                  <span>　</span>
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    value={value}
-                    checked={answers.find(a => a.questionId === question.id)?.value === value}
-                    onChange={() => handleAnswerChange(question.id, value)}
-                    className="form-radio h-4 w-4 text-blue-600"
-                  />
-                  <span className="ml-2 text-sm">
-                    {answerLabels[value - 1]}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {idx !== questions.length - 1 && <div style={{ height: '2em' }} />}
-        </React.Fragment>
-      ))}
-      <div className="flex justify-center mt-8">
-        <div style={{ height: '2em' }} />
-        <button
-          type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          診断結果を見る
-        </button>
-      </div>
-    </form>
+            {idx !== questions.length - 1 && <div style={{ height: '2em' }} />}
+          </React.Fragment>
+        ))}
+        <div className="flex justify-center mt-8">
+          <div style={{ height: '2em' }} />
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            診断結果を見る
+          </button>
+        </div>
+      </form>
+      {showError && (
+        <Modal message="すべての質問に回答してください。" onClose={() => setShowError(false)} />
+      )}
+    </>
   );
 };
 
